@@ -34,6 +34,9 @@ class AnthropicModels(StrEnum):
     CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
     CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
     CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20240620"
+    CLAUDE_3_5_HAIKU = "claude-3-5-haiku-20240620"
+    CLAUDE_3_7_SONNET = "claude-3-7-sonnet-20240725"
+    CLAUDE_3_7_OPUS = "claude-3-7-opus-20240725"
 
     @classmethod
     def default(cls) -> "AnthropicModels":
@@ -46,4 +49,7 @@ ANTHROPIC_MODELS = [
     AnthropicModels.CLAUDE_3_SONNET,
     AnthropicModels.CLAUDE_3_HAIKU,
     AnthropicModels.CLAUDE_3_5_SONNET,
+    AnthropicModels.CLAUDE_3_5_HAIKU,
+    AnthropicModels.CLAUDE_3_7_SONNET,
+    AnthropicModels.CLAUDE_3_7_OPUS,
 ]

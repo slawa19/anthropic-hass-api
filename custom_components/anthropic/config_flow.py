@@ -2,25 +2,17 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+import aiohttp
+import asyncio
+from typing import Any, Dict, Optional
 
-# We don't need the anthropic package anymore
-# Define our own APIError class for compatibility
-class APIError(Exception):
-    """API Error."""
-
-    def __init__(self, message, type, status_code):
-        """Initialize the error."""
-        self.message = message
-        self.type = type
-        self.status_code = status_code
-        super().__init__(message)
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import llm
 from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
@@ -47,12 +39,20 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Define our own APIError class for compatibility
+class APIError(Exception):
+    """API Error."""
+
+    def __init__(self, message, type, status_code):
+        """Initialize the error."""
+        self.message = message
+        self.type = type
+        self.status_code = status_code
+        super().__init__(message)
+
+
 async def validate_api_key(hass: HomeAssistant, api_key: str) -> None:
     """Validate the API key by making a request."""
-    # Instead of using the Anthropic client directly, we'll make a simple HTTP request
-    # to validate the API key
-    import aiohttp
-    
     url = "https://api.anthropic.com/v1/messages"
     headers = {
         "x-api-key": api_key,
@@ -62,18 +62,40 @@ async def validate_api_key(hass: HomeAssistant, api_key: str) -> None:
     data = {
         "model": AnthropicModels.default(),
         "max_tokens": 10,
+        "system": "You are Claude, a helpful AI assistant.",
         "messages": [{"role": "user", "content": "Hello"}],
     }
     
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, json=data) as response:
-            if response.status != 200:
-                text = await response.text()
-                raise APIError(
-                    message=f"API request failed: {text}",
-                    type="api_error",
-                    status_code=response.status,
-                )
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with asyncio.timeout(10):
+                async with session.post(url, headers=headers, json=data) as response:
+                    if response.status != 200:
+                        error_data = await response.text()
+                        try:
+                            error_json = await response.json()
+                            if "error" in error_json:
+                                error_data = error_json["error"].get("message", error_data)
+                        except:
+                            pass
+                        
+                        raise APIError(
+                            message=f"API request failed: {error_data}",
+                            type="api_error",
+                            status_code=response.status,
+                        )
+    except asyncio.TimeoutError:
+        raise APIError(
+            message="Request timed out",
+            type="timeout_error",
+            status_code=408,
+        )
+    except aiohttp.ClientError as err:
+        raise APIError(
+            message=f"Request error: {err}",
+            type="request_error",
+            status_code=500,
+        )
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -130,10 +152,44 @@ class OptionsFlow(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
+            # Update the API key if provided
+            if CONF_API_KEY in user_input and user_input[CONF_API_KEY]:
+                try:
+                    # Validate the new API key
+                    await validate_api_key(self.hass, user_input[CONF_API_KEY])
+                    # Update the config entry with the new API key
+                    new_data = {**self.config_entry.data, CONF_API_KEY: user_input[CONF_API_KEY]}
+                    self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
+                except Exception as err:
+                    _LOGGER.error("Error validating new API key: %s", err)
+                    return self.async_show_form(
+                        step_id="init",
+                        data_schema=vol.Schema(self._get_options_schema()),
+                        errors={"base": "invalid_auth"},
+                    )
+                
+                # Remove API key from options to avoid storing it twice
+                user_input.pop(CONF_API_KEY)
+            
+            # Handle "none" value for LLM_HASS_API
+            if CONF_LLM_HASS_API in user_input and user_input[CONF_LLM_HASS_API] == "none":
+                user_input.pop(CONF_LLM_HASS_API)
+            
             return self.async_create_entry(title="", data=user_input)
 
-        # Define the options schema using translations
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(self._get_options_schema()),
+        )
+    
+    def _get_options_schema(self) -> dict:
+        """Get the options schema."""
         options = {
+            vol.Optional(
+                CONF_API_KEY,
+                default="",
+                description="Leave empty to keep the current API key",
+            ): str,
             vol.Optional(
                 CONF_PROMPT,
                 default=self.config_entry.options.get(CONF_PROMPT, DEFAULT_PROMPT),
@@ -142,52 +198,75 @@ class OptionsFlow(config_entries.OptionsFlow):
                 CONF_CONTROL_HA,
                 default=self.config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA),
             ): bool,
-            vol.Optional(
-                CONF_RECOMMENDED_SETTINGS,
-                default=self.config_entry.options.get(
-                    CONF_RECOMMENDED_SETTINGS, DEFAULT_RECOMMENDED_SETTINGS
-                ),
-            ): bool,
         }
+        
+        # Add LLM API selector if control_ha is enabled
+        if self.config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
+            # Get available LLM APIs
+            hass_apis = [
+                # "No control" means the model will not have access to Home Assistant devices
+                # and will not be able to control them or get information about their state
+                {"label": "No control", "value": "none"}
+            ]
+            
+            for api in llm.async_get_apis(self.hass):
+                # "Assist" and other APIs allow the model to control Home Assistant devices
+                # and get information about their state through tools
+                hass_apis.append({
+                    "label": api.name,  # Usually "Assist" for the standard Home Assistant API
+                    "value": api.id,    # Usually "assist" for the standard API
+                })
+            
+            options[vol.Optional(
+                CONF_LLM_HASS_API,
+                description={"suggested_value": self.config_entry.options.get(CONF_LLM_HASS_API)},
+                default="none",
+            )] = vol.In({api["value"]: api["label"] for api in hass_apis})
+        
+        options[vol.Optional(
+            CONF_RECOMMENDED_SETTINGS,
+            default=self.config_entry.options.get(
+                CONF_RECOMMENDED_SETTINGS, DEFAULT_RECOMMENDED_SETTINGS
+            ),
+        )] = bool
 
-        if not self.config_entry.options.get(
-            CONF_RECOMMENDED_SETTINGS, DEFAULT_RECOMMENDED_SETTINGS
-        ):
-            options.update(
-                {
-                    vol.Optional(
-                        CONF_CHAT_MODEL,
-                        default=self.config_entry.options.get(
-                            CONF_CHAT_MODEL, AnthropicModels.default()
-                        ),
-                    ): vol.In({model: model for model in ANTHROPIC_MODELS}),
-                    vol.Optional(
-                        CONF_MAX_TOKENS,
-                        default=self.config_entry.options.get(
-                            CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS
-                        ),
-                    ): NumberSelector(
-                        NumberSelectorConfig(
-                            min=1,
-                            max=4096,
-                            step=1,
-                            mode="box",
-                        )
+        # Always add advanced options to the schema
+        # They will only be visible in the UI when recommended settings are disabled
+        options.update(
+            {
+                vol.Optional(
+                    CONF_CHAT_MODEL,
+                    default=self.config_entry.options.get(
+                        CONF_CHAT_MODEL, AnthropicModels.default()
                     ),
-                    vol.Optional(
-                        CONF_TEMPERATURE,
-                        default=self.config_entry.options.get(
-                            CONF_TEMPERATURE, DEFAULT_TEMPERATURE
-                        ),
-                    ): NumberSelector(
-                        NumberSelectorConfig(
-                            min=0.0,
-                            max=1.0,
-                            step=0.05,
-                            mode="slider",
-                        )
+                ): vol.In({model: model for model in ANTHROPIC_MODELS}),
+                vol.Optional(
+                    CONF_MAX_TOKENS,
+                    default=self.config_entry.options.get(
+                        CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS
                     ),
-                }
-            )
-
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(options))
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=1,
+                        max=4096,
+                        step=1,
+                        mode="box",
+                    )
+                ),
+                vol.Optional(
+                    CONF_TEMPERATURE,
+                    default=self.config_entry.options.get(
+                        CONF_TEMPERATURE, DEFAULT_TEMPERATURE
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0.0,
+                        max=1.0,
+                        step=0.05,
+                        mode="slider",
+                    )
+                ),
+            }
+        )
+        
+        return options
