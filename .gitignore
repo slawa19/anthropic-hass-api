@@ -40,3 +40,6 @@ Thumbs.db
 .HA_VERSION
 home-assistant.log
 home-assistant_v2.db
+
+# Exclude HOMEASSISTANT folder
+HOMEASSISTANT/
