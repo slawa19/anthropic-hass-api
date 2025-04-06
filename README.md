@@ -3,6 +3,15 @@
 A Home Assistant custom component that integrates Anthropic Claude with Home Assistant, allowing you to use Claude as a voice assistant with your API key.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen.svg)](https://github.com/slawa19/anthropic-hass-api/releases/tag/1.2.0)
+
+## What's New in Version 1.2.0
+
+- **Enhanced Error Handling**: Improved stability with robust error handling throughout the integration
+- **Fixed Critical Issues**: Resolved issues with entity state processing that could cause conversation failures
+- **Brightness Attribute Fix**: Fixed error when processing light entities with null brightness values
+- **Translation System Improvements**: Added caching and better error handling for translations
+- **Overall Stability Improvements**: Made the integration more resilient to unexpected conditions
 
 ## Features
 

@@ -20,7 +20,7 @@ class APIError(Exception):
 
 from homeassistant.components import conversation as ha_conversation
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
+from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.typing import ConfigType
@@ -40,9 +40,11 @@ from .const import (
     DOMAIN,
     AnthropicModels,
 )
-from .conversation import AnthropicAgent
+from .conversation_agent import AnthropicAgent
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORMS = (Platform.CONVERSATION,)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -210,18 +212,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         }
         hass.config_entries.async_update_entry(entry, options=options)
 
-    # Create and register the agent
-    agent = AnthropicAgent(hass, entry, client)
-    ha_conversation.async_set_agent(hass, entry, agent)
-    hass.data[DOMAIN][entry.entry_id] = agent
+    # Store the client in hass.data
+    hass.data[DOMAIN][entry.entry_id] = client
+
+    # Forward the entry setup to the conversation platform
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, []):
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         hass.data[DOMAIN].pop(entry.entry_id)
-        ha_conversation.async_unset_agent(hass, entry)
 
     return unload_ok

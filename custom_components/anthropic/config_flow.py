@@ -145,7 +145,7 @@ class OptionsFlow(config_entries.OptionsFlow):
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -158,8 +158,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                     # Validate the new API key
                     await validate_api_key(self.hass, user_input[CONF_API_KEY])
                     # Update the config entry with the new API key
-                    new_data = {**self.config_entry.data, CONF_API_KEY: user_input[CONF_API_KEY]}
-                    self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
+                    new_data = {**self._config_entry.data, CONF_API_KEY: user_input[CONF_API_KEY]}
+                    self.hass.config_entries.async_update_entry(self._config_entry, data=new_data)
                 except Exception as err:
                     _LOGGER.error("Error validating new API key: %s", err)
                     return self.async_show_form(
@@ -192,16 +192,16 @@ class OptionsFlow(config_entries.OptionsFlow):
             ): str,
             vol.Optional(
                 CONF_PROMPT,
-                default=self.config_entry.options.get(CONF_PROMPT, DEFAULT_PROMPT),
+                default=self._config_entry.options.get(CONF_PROMPT, DEFAULT_PROMPT),
             ): TemplateSelector(),
             vol.Optional(
                 CONF_CONTROL_HA,
-                default=self.config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA),
+                default=self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA),
             ): bool,
         }
         
         # Add LLM API selector if control_ha is enabled
-        if self.config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
+        if self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
             # Get available LLM APIs
             hass_apis = [
                 # "No control" means the model will not have access to Home Assistant devices
@@ -219,13 +219,13 @@ class OptionsFlow(config_entries.OptionsFlow):
             
             options[vol.Optional(
                 CONF_LLM_HASS_API,
-                description={"suggested_value": self.config_entry.options.get(CONF_LLM_HASS_API)},
+                description={"suggested_value": self._config_entry.options.get(CONF_LLM_HASS_API)},
                 default="none",
             )] = vol.In({api["value"]: api["label"] for api in hass_apis})
         
         options[vol.Optional(
             CONF_RECOMMENDED_SETTINGS,
-            default=self.config_entry.options.get(
+            default=self._config_entry.options.get(
                 CONF_RECOMMENDED_SETTINGS, DEFAULT_RECOMMENDED_SETTINGS
             ),
         )] = bool
@@ -236,13 +236,13 @@ class OptionsFlow(config_entries.OptionsFlow):
             {
                 vol.Optional(
                     CONF_CHAT_MODEL,
-                    default=self.config_entry.options.get(
+                    default=self._config_entry.options.get(
                         CONF_CHAT_MODEL, AnthropicModels.default()
                     ),
                 ): vol.In({model: model for model in ANTHROPIC_MODELS}),
                 vol.Optional(
                     CONF_MAX_TOKENS,
-                    default=self.config_entry.options.get(
+                    default=self._config_entry.options.get(
                         CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS
                     ),
                 ): NumberSelector(
@@ -255,7 +255,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 ),
                 vol.Optional(
                     CONF_TEMPERATURE,
-                    default=self.config_entry.options.get(
+                    default=self._config_entry.options.get(
                         CONF_TEMPERATURE, DEFAULT_TEMPERATURE
                     ),
                 ): NumberSelector(
