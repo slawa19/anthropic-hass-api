@@ -155,7 +155,7 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent):
                     if 'hvac_action' in state.attributes:
                         details.append(f"Action: {state.attributes['hvac_action']}")
                 elif domain in ['light', 'fan']:
-                    if 'brightness' in state.attributes:
+                    if 'brightness' in state.attributes and state.attributes['brightness'] is not None:
                         # Convert brightness (0-255) to percentage
                         brightness_pct = round(state.attributes['brightness'] / 255 * 100)
                         details.append(f"Brightness: {brightness_pct}%")
