@@ -9,6 +9,6 @@
   "iot_class": "cloud_polling",
   "requirements": ["aiohttp>=3.8.0"],
   "translations": ["en", "ru"],
-  "version": "1.2.0",
+  "version": "1.2.1",
   "issue_tracker": "https://github.com/slawa19/anthropic-hass-api/issues"
 }

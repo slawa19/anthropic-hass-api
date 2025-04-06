@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1] - 2025-04-06
+
+### Fixed
+- Fixed syntax error in conversation_agent.py that was causing issues with Python 3.13
+- Fixed indentation issues in the _async_generate_prompt method
+- Improved multilingual support to properly handle language switching
+- Enhanced translation system to better handle fallbacks to English
+
 ## [1.2.0] - 2025-04-06
 
 ### Added

@@ -3,9 +3,16 @@
 A Home Assistant custom component that integrates Anthropic Claude with Home Assistant, allowing you to use Claude as a voice assistant with your API key.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/badge/Version-1.2.0-brightgreen.svg)](https://github.com/slawa19/anthropic-hass-api/releases/tag/1.2.0)
+[![Version](https://img.shields.io/badge/Version-1.2.1-brightgreen.svg)](https://github.com/slawa19/anthropic-hass-api/releases/tag/1.2.1)
 
-## What's New in Version 1.2.0
+## What's New in Version 1.2.1
+
+- **Python 3.13 Compatibility**: Fixed syntax error in conversation_agent.py that was causing issues with Python 3.13
+- **Improved Multilingual Support**: Enhanced language handling to properly switch between languages
+- **Translation System Fixes**: Improved how translations are loaded and fallbacks are handled
+- **Code Structure Improvements**: Fixed indentation issues in the _async_generate_prompt method
+
+## Previous Updates (1.2.0)
 
 - **Enhanced Error Handling**: Improved stability with robust error handling throughout the integration
 - **Fixed Critical Issues**: Resolved issues with entity state processing that could cause conversation failures

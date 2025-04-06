@@ -1,34 +1,29 @@
-# Release Notes for v1.2.0
+# Release Notes for v1.2.1
 
 ## Overview
 
-This release focuses on stability improvements and bug fixes, making the Anthropic integration more robust and reliable. We've addressed several critical issues that could cause conversation failures and improved error handling throughout the integration.
+This release addresses a critical syntax error in the `conversation_agent.py` file that was causing issues with Python 3.13 compatibility. We've also improved the multilingual support to ensure proper language switching and enhanced the translation system.
 
 ## What's New
 
-### Enhanced Error Handling
-- Added comprehensive error handling throughout the integration
-- Implemented multi-level error handling in critical methods
-- Added more detailed logging for better troubleshooting
+### Python 3.13 Compatibility
+- Fixed syntax error in `conversation_agent.py` that was causing issues with Python 3.13
+- Fixed indentation issues in the `_async_generate_prompt` method
+- Updated GitHub workflow to include Python 3.13 in the test matrix
 
-### Fixed Critical Issues
-- Fixed issue with brightness attribute processing that could cause conversation failures
-- Resolved potential infinite recursion in system prompt generation
-- Improved entity state processing to handle unexpected attribute values
+### Improved Multilingual Support
+- Enhanced language handling to properly switch between languages
+- Fixed issues with prompt translation in different language interfaces
+- Improved how translations are loaded and fallbacks are handled
 
-### Translation System Improvements
-- Added caching for translations to improve performance
-- Enhanced error handling in translation system
-- Better fallback mechanisms when translations are unavailable
-
-### Overall Stability Improvements
-- Made the integration more resilient to unexpected conditions
-- Improved robustness when dealing with various entity types
-- Better handling of API communication errors
+### Code Structure Improvements
+- Fixed duplicate method declarations
+- Improved code organization and readability
+- Enhanced error handling in language-specific code paths
 
 ## Upgrading
 
-To upgrade to version 1.2.0:
+To upgrade to version 1.2.1:
 
 1. Go to HACS > Integrations
 2. Find "Anthropic" in your installed integrations
@@ -39,11 +34,10 @@ To upgrade to version 1.2.0:
 
 ### Key Changes
 
-- Added try/except blocks in `_get_entity_states()` method to handle errors when processing entity attributes
-- Fixed potential infinite recursion in `_get_system_prompt()` by using DEFAULT_PROMPT directly
-- Enhanced `_get_translations()` with additional error handling and better caching
-- Added specific error handling for brightness attribute calculation
-- Improved logging throughout the codebase for better diagnostics
+- Fixed syntax error in the `_async_generate_prompt` method where a `try` block was missing its corresponding `except` block
+- Removed duplicate method declaration that was causing indentation issues
+- Ensured proper handling of language selection in the translation system
+- Updated GitHub workflow to test against Python 3.13
 
 ### Contributors
 
