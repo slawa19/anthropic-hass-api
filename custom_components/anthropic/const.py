@@ -34,26 +34,48 @@ DEFAULT_RECOMMENDED_SETTINGS = True
 class AnthropicModels(StrEnum):
     """Anthropic models."""
 
+    # Claude 4 models
+    CLAUDE_OPUS_4 = "claude-opus-4-20250514"
+    CLAUDE_SONNET_4 = "claude-sonnet-4-20250514"
+    
+    # Claude 3.7 models
+    CLAUDE_3_7_SONNET = "claude-3-7-sonnet-20250219"
+    
+    # Claude 3.5 models (updated versions)
+    CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20241022"
+    CLAUDE_3_5_HAIKU = "claude-3-5-haiku-20241022"
+    
+    # Legacy Claude 3.5 models
+    CLAUDE_3_5_SONNET_LEGACY = "claude-3-5-sonnet-20240620"
+    
+    # Claude 3 models
     CLAUDE_3_OPUS = "claude-3-opus-20240229"
     CLAUDE_3_SONNET = "claude-3-sonnet-20240229"
     CLAUDE_3_HAIKU = "claude-3-haiku-20240307"
-    CLAUDE_3_5_SONNET = "claude-3-5-sonnet-20240620"
-    CLAUDE_3_5_HAIKU = "claude-3-5-haiku-20240620"
-    CLAUDE_3_7_SONNET = "claude-3-7-sonnet-20240725"
-    CLAUDE_3_7_OPUS = "claude-3-7-opus-20240725"
 
     @classmethod
     def default(cls) -> "AnthropicModels":
         """Return the default model."""
-        return cls.CLAUDE_3_5_SONNET
+        return cls.CLAUDE_SONNET_4
 
 
 ANTHROPIC_MODELS = [
+    # Latest Claude 4 models
+    AnthropicModels.CLAUDE_OPUS_4,
+    AnthropicModels.CLAUDE_SONNET_4,
+    
+    # Claude 3.7 models
+    AnthropicModels.CLAUDE_3_7_SONNET,
+    
+    # Updated Claude 3.5 models
+    AnthropicModels.CLAUDE_3_5_SONNET,
+    AnthropicModels.CLAUDE_3_5_HAIKU,
+    
+    # Legacy Claude 3.5 models
+    AnthropicModels.CLAUDE_3_5_SONNET_LEGACY,
+    
+    # Claude 3 models
     AnthropicModels.CLAUDE_3_OPUS,
     AnthropicModels.CLAUDE_3_SONNET,
     AnthropicModels.CLAUDE_3_HAIKU,
-    AnthropicModels.CLAUDE_3_5_SONNET,
-    AnthropicModels.CLAUDE_3_5_HAIKU,
-    AnthropicModels.CLAUDE_3_7_SONNET,
-    AnthropicModels.CLAUDE_3_7_OPUS,
 ]
