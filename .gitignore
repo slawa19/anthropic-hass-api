@@ -43,3 +43,5 @@ home-assistant_v2.db
 
 # Exclude HOMEASSISTANT folder
 HOMEASSISTANT/
+ANTHROPIC_FIX_INSTRUCTIONS.md
+test_type_conversion.py

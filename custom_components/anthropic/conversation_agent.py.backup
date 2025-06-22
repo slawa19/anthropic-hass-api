@@ -188,21 +188,8 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         self.model = entry.options.get(
             CONF_CHAT_MODEL, AnthropicModels.default()
         )
-        # Принудительное приведение типов для предотвращения ошибок API
-        max_tokens_raw = entry.options.get(CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS)
-        temperature_raw = entry.options.get(CONF_TEMPERATURE, DEFAULT_TEMPERATURE)
-        
-        try:
-            self.max_tokens = int(max_tokens_raw) if max_tokens_raw is not None else DEFAULT_MAX_TOKENS
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid max_tokens value '%s', using default: %s", max_tokens_raw, err)
-            self.max_tokens = DEFAULT_MAX_TOKENS
-            
-        try:
-            self.temperature = float(temperature_raw) if temperature_raw is not None else DEFAULT_TEMPERATURE
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid temperature value '%s', using default: %s", temperature_raw, err)
-            self.temperature = DEFAULT_TEMPERATURE
+        self.max_tokens = entry.options.get(CONF_MAX_TOKENS, DEFAULT_MAX_TOKENS)
+        self.temperature = entry.options.get(CONF_TEMPERATURE, DEFAULT_TEMPERATURE)
         self.control_ha = entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA)
         self.recommended_settings = entry.options.get(CONF_RECOMMENDED_SETTINGS, True)
         self._attr_unique_id = entry.entry_id
@@ -297,20 +284,6 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
             model = AnthropicModels.default()
             max_tokens = DEFAULT_MAX_TOKENS
             temperature = DEFAULT_TEMPERATURE
-        
-        # Дополнительная валидация типов данных перед API вызовом
-        # Это защищает от случаев, когда значения могли быть изменены извне
-        try:
-            max_tokens = int(max_tokens) if max_tokens is not None else DEFAULT_MAX_TOKENS
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid max_tokens value '%s' in API call, using default: %s", max_tokens, err)
-            max_tokens = DEFAULT_MAX_TOKENS
-            
-        try:
-            temperature = float(temperature) if temperature is not None else DEFAULT_TEMPERATURE
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid temperature value '%s' in API call, using default: %s", temperature, err)
-            temperature = DEFAULT_TEMPERATURE
 
         # Convert chat log content to Anthropic message format
         messages = [
@@ -361,14 +334,12 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
                         except Exception as err:
                             _LOGGER.error("Error getting home state: %s", err)
                 
-                # Log the API request with type information for debugging
+                # Log the API request
                 _LOGGER.debug(
-                    "Calling Anthropic API with model=%s, max_tokens=%s (type: %s), temperature=%s (type: %s), system=%s, messages=%s, tools=%s",
+                    "Calling Anthropic API with model=%s, max_tokens=%s, temperature=%s, system=%s, messages=%s, tools=%s",
                     model,
                     max_tokens,
-                    type(max_tokens).__name__,
                     temperature,
-                    type(temperature).__name__,
                     system_prompt,
                     messages,
                     tools,
