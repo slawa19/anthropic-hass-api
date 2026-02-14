@@ -457,9 +457,9 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
                             break
             except Exception as err:
                 _LOGGER.warning("Error extracting response text: %s", err)
-                response_text = "An error occurred while processing the response."
+                response_text = "Unable to extract response text from API response."
             
-            intent_response.async_set_speech(response_text or "Unable to generate a response.")
+            intent_response.async_set_speech(response_text or "No text content received from API response.")
         
         return ha_conversation.ConversationResult(
             conversation_id=chat_log.conversation_id,
