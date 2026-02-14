@@ -27,12 +27,10 @@ from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_CHAT_MODEL,
-    CONF_CONTROL_HA,
     CONF_MAX_TOKENS,
     CONF_PROMPT,
     CONF_RECOMMENDED_SETTINGS,
     CONF_TEMPERATURE,
-    DEFAULT_CONTROL_HA,
     DEFAULT_MAX_TOKENS,
     DEFAULT_PROMPT,
     DEFAULT_RECOMMENDED_SETTINGS,
@@ -203,12 +201,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not entry.options:
         options = {
             CONF_PROMPT: DEFAULT_PROMPT,
-            CONF_CONTROL_HA: DEFAULT_CONTROL_HA,
+            CONF_LLM_HASS_API: "assist",
             CONF_RECOMMENDED_SETTINGS: DEFAULT_RECOMMENDED_SETTINGS,
             CONF_CHAT_MODEL: AnthropicModels.default(),
             CONF_MAX_TOKENS: DEFAULT_MAX_TOKENS,
             CONF_TEMPERATURE: DEFAULT_TEMPERATURE,
-            # Don't set CONF_LLM_HASS_API by default
         }
         hass.config_entries.async_update_entry(entry, options=options)
 

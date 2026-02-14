@@ -7,19 +7,17 @@ import custom_components.anthropic.conversation
 from homeassistant.components import conversation
 from homeassistant.components.anthropic.const import (
     CONF_CHAT_MODEL,
-    CONF_CONTROL_HA,
     CONF_MAX_TOKENS,
     CONF_PROMPT,
     CONF_RECOMMENDED_SETTINGS,
     CONF_TEMPERATURE,
-    DEFAULT_CONTROL_HA,
     DEFAULT_MAX_TOKENS,
     DEFAULT_PROMPT,
     DEFAULT_TEMPERATURE,
     DOMAIN,
     AnthropicModels,
 )
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import intent
 
@@ -63,7 +61,7 @@ async def test_conversation_agent(hass: HomeAssistant, mock_anthropic_client) ->
             data={CONF_API_KEY: "test-api-key"},
             options={
                 CONF_PROMPT: DEFAULT_PROMPT,
-                CONF_CONTROL_HA: DEFAULT_CONTROL_HA,
+                CONF_LLM_HASS_API: "none",
                 CONF_RECOMMENDED_SETTINGS: True,
                 CONF_CHAT_MODEL: AnthropicModels.default(),
                 CONF_MAX_TOKENS: DEFAULT_MAX_TOKENS,
@@ -109,7 +107,7 @@ async def test_conversation_agent_with_ha_control(
             data={CONF_API_KEY: "test-api-key"},
             options={
                 CONF_PROMPT: DEFAULT_PROMPT,
-                CONF_CONTROL_HA: True,
+                CONF_LLM_HASS_API: "assist",
                 CONF_RECOMMENDED_SETTINGS: True,
                 CONF_CHAT_MODEL: AnthropicModels.default(),
                 CONF_MAX_TOKENS: DEFAULT_MAX_TOKENS,

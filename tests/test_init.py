@@ -6,12 +6,10 @@ import requests
 
 from homeassistant.components.anthropic.const import (
     CONF_CHAT_MODEL,
-    CONF_CONTROL_HA,
     CONF_MAX_TOKENS,
     CONF_PROMPT,
     CONF_RECOMMENDED_SETTINGS,
     CONF_TEMPERATURE,
-    DEFAULT_CONTROL_HA,
     DEFAULT_MAX_TOKENS,
     DEFAULT_PROMPT,
     DEFAULT_RECOMMENDED_SETTINGS,
@@ -19,7 +17,7 @@ from homeassistant.components.anthropic.const import (
     DOMAIN,
     AnthropicModels,
 )
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.setup import async_setup_component
@@ -57,7 +55,7 @@ async def test_setup_entry(hass: HomeAssistant) -> None:
     
     # Check that default options were set
     assert entry.options[CONF_PROMPT] == DEFAULT_PROMPT
-    assert entry.options[CONF_CONTROL_HA] == DEFAULT_CONTROL_HA
+    assert entry.options[CONF_LLM_HASS_API] == "assist"
     assert entry.options[CONF_RECOMMENDED_SETTINGS] == DEFAULT_RECOMMENDED_SETTINGS
     assert entry.options[CONF_CHAT_MODEL] == AnthropicModels.default()
     assert entry.options[CONF_MAX_TOKENS] == DEFAULT_MAX_TOKENS

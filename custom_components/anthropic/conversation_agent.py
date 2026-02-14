@@ -212,7 +212,14 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         except (ValueError, TypeError) as err:
             _LOGGER.warning("Invalid temperature value '%s', using default: %s", temperature_raw, err)
             self.temperature = DEFAULT_TEMPERATURE
-        self.control_ha = entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA)
+        # Derive control_ha from LLM API selection
+        # If an API is selected (not "none" and not empty), control is enabled
+        llm_api = entry.options.get(CONF_LLM_HASS_API)
+        if llm_api is None:
+            # Legacy migration: no llm_hass_api set, fall back to old control_ha setting
+            self.control_ha = entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA)
+        else:
+            self.control_ha = llm_api != "none" and llm_api != ""
         self.recommended_settings = entry.options.get(CONF_RECOMMENDED_SETTINGS, True)
         self._attr_unique_id = entry.entry_id
         self._attr_device_info = dr.DeviceInfo(
@@ -285,7 +292,7 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
             await chat_log.async_update_llm_data(
                 DOMAIN,
                 user_input,
-                options.get(CONF_LLM_HASS_API) if self.control_ha else None,
+                options.get(CONF_LLM_HASS_API) if self.control_ha and options.get(CONF_LLM_HASS_API) != "none" else None,
                 self.prompt,
             )
         except ha_conversation.ConverseError as err:
