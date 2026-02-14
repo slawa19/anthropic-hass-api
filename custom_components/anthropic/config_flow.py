@@ -171,9 +171,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                 # Remove API key from options to avoid storing it twice
                 user_input.pop(CONF_API_KEY)
             
-            # Handle "none" value for LLM_HASS_API
-            if CONF_LLM_HASS_API in user_input and user_input[CONF_LLM_HASS_API] == "none":
-                user_input.pop(CONF_LLM_HASS_API)
+            # Handle "none" value for LLM_HASS_API - pass None to llm_api
+            # but keep the value in options for UI state
             
             return self.async_create_entry(title="", data=user_input)
 
@@ -184,6 +183,27 @@ class OptionsFlow(config_entries.OptionsFlow):
     
     def _get_options_schema(self) -> dict:
         """Get the options schema."""
+        # Get available LLM APIs
+        hass_apis = [
+            # "No control" means the model will not have access to Home Assistant devices
+            # and will not be able to control them or get information about their state
+            {"label": "No control", "value": "none"}
+        ]
+        
+        for api in llm.async_get_apis(self.hass):
+            # "Assist" and other APIs allow the model to control Home Assistant devices
+            # and get information about their state through tools
+            hass_apis.append({
+                "label": api.name,  # Usually "Assist" for the standard Home Assistant API
+                "value": api.id,    # Usually "assist" for the standard API
+            })
+
+        # Determine default value for LLM API selector
+        # Support migration from old control_ha setting
+        current_llm_api = self._config_entry.options.get(CONF_LLM_HASS_API)
+        if current_llm_api is None and self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
+            current_llm_api = "assist"
+
         options = {
             vol.Optional(
                 CONF_API_KEY,
@@ -195,33 +215,11 @@ class OptionsFlow(config_entries.OptionsFlow):
                 default=self._config_entry.options.get(CONF_PROMPT, DEFAULT_PROMPT),
             ): TemplateSelector(),
             vol.Optional(
-                CONF_CONTROL_HA,
-                default=self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA),
-            ): bool,
-        }
-        
-        # Add LLM API selector if control_ha is enabled
-        if self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
-            # Get available LLM APIs
-            hass_apis = [
-                # "No control" means the model will not have access to Home Assistant devices
-                # and will not be able to control them or get information about their state
-                {"label": "No control", "value": "none"}
-            ]
-            
-            for api in llm.async_get_apis(self.hass):
-                # "Assist" and other APIs allow the model to control Home Assistant devices
-                # and get information about their state through tools
-                hass_apis.append({
-                    "label": api.name,  # Usually "Assist" for the standard Home Assistant API
-                    "value": api.id,    # Usually "assist" for the standard API
-                })
-            
-            options[vol.Optional(
                 CONF_LLM_HASS_API,
-                description={"suggested_value": self._config_entry.options.get(CONF_LLM_HASS_API)},
+                description={"suggested_value": current_llm_api},
                 default="none",
-            )] = vol.In({api["value"]: api["label"] for api in hass_apis})
+            ): vol.In({api["value"]: api["label"] for api in hass_apis}),
+        }
         
         options[vol.Optional(
             CONF_RECOMMENDED_SETTINGS,

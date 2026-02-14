@@ -45,3 +45,4 @@ home-assistant_v2.db
 HOMEASSISTANT/
 ANTHROPIC_FIX_INSTRUCTIONS.md
 test_type_conversion.py
+*.backup
