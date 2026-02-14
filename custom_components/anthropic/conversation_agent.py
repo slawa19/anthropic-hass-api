@@ -303,7 +303,7 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         temperature = self.temperature
 
         if self.recommended_settings:
-            # Use recommended defaults - no validation needed as they're constants
+            # Use recommended defaults - these are safe constants that don't need validation
             model = AnthropicModels.default()
             max_tokens = DEFAULT_MAX_TOKENS
             temperature = DEFAULT_TEMPERATURE
@@ -432,7 +432,7 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
                     messages.extend(_convert_content_to_param(content))
             except Exception as err:
                 _LOGGER.error("Error processing response stream: %s", err, exc_info=True)
-                # Continue with partial results if available
+                # Continue processing - any successfully processed content is already in messages
                 pass
 
             # Check if there are any unresponded tool results in the chat log
@@ -457,9 +457,9 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
                             break
             except Exception as err:
                 _LOGGER.warning("Error extracting response text: %s", err)
-                response_text = "I apologize, but I encountered an error processing my response."
+                response_text = "An error occurred while processing the response."
             
-            intent_response.async_set_speech(response_text or "I'm sorry, I couldn't generate a response.")
+            intent_response.async_set_speech(response_text or "Unable to generate a response.")
         
         return ha_conversation.ConversationResult(
             conversation_id=chat_log.conversation_id,
