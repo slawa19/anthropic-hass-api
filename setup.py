@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="anthropic-hass-api",
-    version="1.0.0",
+    version="1.3.0",
     description="Home Assistant integration for Anthropic Claude",
     url="https://github.com/slawa19/anthropic-hass-api",
     author="slawa19",
