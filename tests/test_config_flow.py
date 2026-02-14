@@ -122,6 +122,8 @@ async def test_options_flow_keeps_current_llm_hass_api_default(
         schema = options_flow._get_options_schema()
 
     llm_hass_api_key = next(
-        key for key in schema if getattr(key, "schema", None) == CONF_LLM_HASS_API
+        (key for key in schema if getattr(key, "schema", None) == CONF_LLM_HASS_API),
+        None,
     )
+    assert llm_hass_api_key is not None
     assert llm_hass_api_key.default() == "assist"

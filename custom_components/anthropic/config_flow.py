@@ -203,7 +203,8 @@ class OptionsFlow(config_entries.OptionsFlow):
         current_llm_api = self._config_entry.options.get(CONF_LLM_HASS_API)
         if current_llm_api is None and self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
             current_llm_api = "assist"
-        current_llm_api = current_llm_api or "none"
+        if current_llm_api is None:
+            current_llm_api = "none"
 
         options = {
             vol.Optional(
