@@ -89,7 +89,29 @@ def _convert_content_to_param(
             }]
         }]
 
-    if content.content:
+    # For assistant content with tool calls, combine text and tool_use in one message
+    if isinstance(content, ha_conversation.AssistantContent) and content.tool_calls:
+        content_blocks = []
+        
+        # Add text content if present
+        if content.content:
+            content_blocks.append({"type": "text", "text": content.content})
+        
+        # Add all tool calls to the same message
+        for tool_call in content.tool_calls:
+            content_blocks.append({
+                "type": "tool_use",
+                "id": tool_call.id,
+                "name": tool_call.tool_name,
+                "input": tool_call.tool_args
+            })
+        
+        messages.append({
+            "role": "assistant",
+            "content": content_blocks
+        })
+    elif content.content:
+        # Regular text message without tool calls
         if content.role == "user":
             messages.append({
                 "role": "user",
@@ -99,18 +121,6 @@ def _convert_content_to_param(
             messages.append({
                 "role": "assistant",
                 "content": [{"type": "text", "text": content.content}]
-            })
-
-    if isinstance(content, ha_conversation.AssistantContent) and content.tool_calls:
-        for tool_call in content.tool_calls:
-            messages.append({
-                "role": "assistant",
-                "content": [{
-                    "type": "tool_use",
-                    "id": tool_call.id,
-                    "name": tool_call.tool_name,
-                    "input": tool_call.tool_args
-                }]
             })
     
     return messages
