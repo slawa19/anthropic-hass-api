@@ -3,22 +3,16 @@
 A Home Assistant custom component that integrates Anthropic Claude with Home Assistant, allowing you to use Claude as a voice assistant with your API key.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
-[![Version](https://img.shields.io/badge/Version-1.2.1-brightgreen.svg)](https://github.com/slawa19/anthropic-hass-api/releases/tag/1.2.1)
+[![Version](https://img.shields.io/badge/Version-1.3.0-brightgreen.svg)](https://github.com/slawa19/anthropic-hass-api/releases/tag/1.3.0)
 
-## What's New in Version 1.2.1
+## What's New in Version 1.3.0
 
-- **Python 3.13 Compatibility**: Fixed syntax error in conversation_agent.py that was causing issues with Python 3.13
-- **Improved Multilingual Support**: Enhanced language handling to properly switch between languages
-- **Translation System Fixes**: Improved how translations are loaded and fallbacks are handled
-- **Code Structure Improvements**: Fixed indentation issues in the _async_generate_prompt method
-
-## Previous Updates (1.2.0)
-
-- **Enhanced Error Handling**: Improved stability with robust error handling throughout the integration
-- **Fixed Critical Issues**: Resolved issues with entity state processing that could cause conversation failures
-- **Brightness Attribute Fix**: Fixed error when processing light entities with null brightness values
-- **Translation System Improvements**: Added caching and better error handling for translations
-- **Overall Stability Improvements**: Made the integration more resilient to unexpected conditions
+- **Updated Model Catalog**: Support for the latest Claude 4.6 and Claude 4.5 model families (Opus, Sonnet, Haiku). Default model is now Claude Sonnet 4.5
+- **TTS-Optimized Prompts**: Completely rewritten system prompts optimized for text-to-speech synthesis — responses are ready to be read aloud without post-processing
+- **Dual Response Modes**: Default brief mode for quick answers, with a detailed explanation mode activated on explicit request
+- **Locale-Specific Prompts**: English and Russian prompts are now independently tailored — Russian includes transliteration rules and "градусов тепла/мороза" phrasing, English uses natural conventions ("degrees", "minus")
+- **Anthropic API Compliance**: Fixed tool format (removed invalid `type` field) and message structure (combined content array for assistant messages with tool calls)
+- **Improved Error Handling**: Added exception handling for unexpected API errors with specific error messages and fallback response processing
 
 ## Features
 
@@ -26,7 +20,7 @@ A Home Assistant custom component that integrates Anthropic Claude with Home Ass
 - **Use Anthropic Claude as a conversation agent in Home Assistant**
 - **Control your Home Assistant devices using natural language**
 - **Configure Claude's behavior with custom instructions**
-- **Choose from different Claude models** (Claude 3 Opus, Sonnet, Haiku, and Claude 3.5 Sonnet)
+- **Choose from different Claude models** (Claude 4.6 Opus, Claude 4.5 Opus/Sonnet/Haiku, Claude 4 Sonnet, Claude 3.5 Haiku)
 - **Adjust parameters like temperature and max tokens**
 - **Direct API Integration**: Uses direct HTTP requests to the Anthropic API for better compatibility
 
@@ -104,21 +98,6 @@ The integration automatically adapts to your Home Assistant interface language:
 - If your Home Assistant interface is set to English, the integration will display in English
 - If your Home Assistant interface is set to Russian, the integration will display in Russian
 - For other languages, English will be used as the default
-
-## Uploading to GitHub
-
-To upload this project to your GitHub repository:
-
-1. Create a new repository on GitHub at https://github.com/slawa19/anthropic-hass-api
-2. Initialize a git repository in the project directory:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/slawa19/anthropic-hass-api.git
-   git push -u origin main
-   ```
 
 ## Contributing
 

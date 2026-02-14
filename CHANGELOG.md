@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.3.0] - 2026-02-14
+
+### Added
+- Support for Claude 4.6 Opus model
+- Support for Claude 4.5 models: Opus, Sonnet, Haiku
+- TTS-optimized system prompts for speech-ready output
+- Dual response modes: brief (default) and detailed explanation on request
+- Locale-specific prompt customizations (English and Russian)
+
+### Changed
+- Default model changed from Claude Sonnet 4 to Claude Sonnet 4.5
+- System prompts rewritten for TTS synthesis — responses ready to be read aloud
+- English prompt uses natural conventions ("degrees", "minus", "#")
+- Russian prompt uses locale-specific rules (transliteration, "градусов тепла/мороза", "№")
+
+### Fixed
+- Removed invalid `type` field from Anthropic API tool definitions
+- Fixed assistant messages to combine text and tool_use blocks in single content array
+- Fixed English locale prompt to remove Russian-specific transliteration rules
+- Improved error handling for unexpected API errors
+
+### Removed
+- Deprecated Claude 3.x models (Opus, Sonnet, Haiku, 3.5 Sonnet legacy variants)
+- Removed Claude Opus 4 and Claude 3.7 Sonnet
+
 ## [1.2.1] - 2025-04-06
 
 ### Fixed
