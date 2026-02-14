@@ -7,10 +7,11 @@ import custom_components.anthropic.config_flow
 
 from homeassistant import config_entries
 from homeassistant.components.anthropic.const import DOMAIN
-from homeassistant.const import CONF_API_KEY
+from homeassistant.const import CONF_API_KEY, CONF_LLM_HASS_API
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
+from custom_components.anthropic.config_flow import OptionsFlow
 from tests.common import MockConfigEntry
 
 
@@ -100,3 +101,27 @@ async def test_form_unknown_error(hass: HomeAssistant) -> None:
 
     assert result2["type"] == FlowResultType.FORM
     assert result2["errors"] == {"base": "unknown"}
+
+
+async def test_options_flow_keeps_current_llm_hass_api_default(
+    hass: HomeAssistant,
+) -> None:
+    """Test options form default keeps existing llm_hass_api value."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_API_KEY: "test-api-key"},
+        options={CONF_LLM_HASS_API: "assist"},
+    )
+    options_flow = OptionsFlow(config_entry)
+    options_flow.hass = hass
+
+    with patch(
+        "custom_components.anthropic.config_flow.llm.async_get_apis",
+        return_value=[],
+    ):
+        schema = options_flow._get_options_schema()
+
+    llm_hass_api_key = next(
+        key for key in schema if getattr(key, "schema", None) == CONF_LLM_HASS_API
+    )
+    assert llm_hass_api_key.default() == "assist"

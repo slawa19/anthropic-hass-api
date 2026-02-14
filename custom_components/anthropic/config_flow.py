@@ -171,8 +171,8 @@ class OptionsFlow(config_entries.OptionsFlow):
                 # Remove API key from options to avoid storing it twice
                 user_input.pop(CONF_API_KEY)
             
-            # Handle "none" value for LLM_HASS_API - pass None to llm_api
-            # but keep the value in options for UI state
+            # Keep "none" in options for UI state;
+            # downstream code treats it as no LLM API.
             
             return self.async_create_entry(title="", data=user_input)
 
@@ -198,11 +198,12 @@ class OptionsFlow(config_entries.OptionsFlow):
                 "value": api.id,    # Usually "assist" for the standard API
             })
 
-        # Determine default value for LLM API selector
-        # Support migration from old control_ha setting
+        # Determine default value for LLM API selector.
+        # Support migration from old control_ha setting.
         current_llm_api = self._config_entry.options.get(CONF_LLM_HASS_API)
         if current_llm_api is None and self._config_entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA):
             current_llm_api = "assist"
+        current_llm_api = current_llm_api or "none"
 
         options = {
             vol.Optional(
@@ -217,7 +218,7 @@ class OptionsFlow(config_entries.OptionsFlow):
             vol.Optional(
                 CONF_LLM_HASS_API,
                 description={"suggested_value": current_llm_api},
-                default="none",
+                default=current_llm_api,
             ): vol.In({api["value"]: api["label"] for api in hass_apis}),
         }
         
