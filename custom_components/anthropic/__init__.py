@@ -91,7 +91,7 @@ class Messages:
         url = "https://api.anthropic.com/v1/messages"
         headers = {
             "x-api-key": self.api_key,
-            "anthropic-version": "2023-06-01",  # This is the minimum supported version
+            "anthropic-version": "2023-06-01",
             "content-type": "application/json",
         }
         data = {
