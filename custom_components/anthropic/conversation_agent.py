@@ -215,11 +215,11 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         # Derive control_ha from LLM API selection
         # If an API is selected (not "none" and not empty), control is enabled
         llm_api = entry.options.get(CONF_LLM_HASS_API)
-        if llm_api and llm_api != "none":
-            self.control_ha = True
+        if llm_api is None:
+            # Legacy migration: no llm_hass_api set, fall back to old control_ha setting
+            self.control_ha = entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA)
         else:
-            # Fall back to legacy control_ha setting for migration
-            self.control_ha = entry.options.get(CONF_CONTROL_HA, DEFAULT_CONTROL_HA) if not llm_api else False
+            self.control_ha = llm_api != "none" and llm_api != ""
         self.recommended_settings = entry.options.get(CONF_RECOMMENDED_SETTINGS, True)
         self._attr_unique_id = entry.entry_id
         self._attr_device_info = dr.DeviceInfo(
