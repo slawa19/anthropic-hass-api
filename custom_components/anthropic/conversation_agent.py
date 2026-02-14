@@ -70,7 +70,6 @@ def _format_tool(
         "name": tool.name,
         "description": tool.description or "",
         "input_schema": convert(tool.parameters, custom_serializer=custom_serializer),
-        "type": "custom"
     }
 
 
@@ -294,23 +293,23 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         temperature = self.temperature
 
         if self.recommended_settings:
+            # Use recommended defaults - no validation needed as they're constants
             model = AnthropicModels.default()
             max_tokens = DEFAULT_MAX_TOKENS
             temperature = DEFAULT_TEMPERATURE
-        
-        # Дополнительная валидация типов данных перед API вызовом
-        # Это защищает от случаев, когда значения могли быть изменены извне
-        try:
-            max_tokens = int(max_tokens) if max_tokens is not None else DEFAULT_MAX_TOKENS
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid max_tokens value '%s' in API call, using default: %s", max_tokens, err)
-            max_tokens = DEFAULT_MAX_TOKENS
-            
-        try:
-            temperature = float(temperature) if temperature is not None else DEFAULT_TEMPERATURE
-        except (ValueError, TypeError) as err:
-            _LOGGER.warning("Invalid temperature value '%s' in API call, using default: %s", temperature, err)
-            temperature = DEFAULT_TEMPERATURE
+        else:
+            # Validate user-configured values before API call
+            try:
+                max_tokens = int(max_tokens) if max_tokens is not None else DEFAULT_MAX_TOKENS
+            except (ValueError, TypeError) as err:
+                _LOGGER.warning("Invalid max_tokens value '%s' in API call, using default: %s", max_tokens, err)
+                max_tokens = DEFAULT_MAX_TOKENS
+                
+            try:
+                temperature = float(temperature) if temperature is not None else DEFAULT_TEMPERATURE
+            except (ValueError, TypeError) as err:
+                _LOGGER.warning("Invalid temperature value '%s' in API call, using default: %s", temperature, err)
+                temperature = DEFAULT_TEMPERATURE
 
         # Convert chat log content to Anthropic message format
         messages = [
@@ -403,12 +402,28 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
                     conversation_id=chat_log.conversation_id,
                     response=intent_response,
                 )
+            except Exception as err:
+                _LOGGER.error("Unexpected error during API call: %s", err, exc_info=True)
+                intent_response = intent.IntentResponse(language=user_input.language)
+                intent_response.async_set_error(
+                    intent.IntentResponseErrorCode.UNKNOWN,
+                    f"Unexpected error: {err}",
+                )
+                return ha_conversation.ConversationResult(
+                    conversation_id=chat_log.conversation_id,
+                    response=intent_response,
+                )
 
             # Process the response using the chat_log
-            async for content in chat_log.async_add_delta_content_stream(
-                user_input.agent_id or self.entity_id, _transform_stream(chat_log, response)
-            ):
-                messages.extend(_convert_content_to_param(content))
+            try:
+                async for content in chat_log.async_add_delta_content_stream(
+                    user_input.agent_id or self.entity_id, _transform_stream(chat_log, response)
+                ):
+                    messages.extend(_convert_content_to_param(content))
+            except Exception as err:
+                _LOGGER.error("Error processing response stream: %s", err, exc_info=True)
+                # Continue with partial results if available
+                pass
 
             # Check if there are any unresponded tool results in the chat log
             if not chat_log.unresponded_tool_results:
@@ -421,16 +436,20 @@ class AnthropicAgent(ha_conversation.AbstractConversationAgent, ha_conversation.
         else:
             # Fallback to extracting text from the response
             response_text = ""
-            if hasattr(response, "content") and response.content:
-                for content_item in response.content:
-                    if hasattr(content_item, "type") and content_item.type == "text":
-                        response_text = content_item.text
-                        break
-                    elif isinstance(content_item, dict) and content_item.get("type") == "text":
-                        response_text = content_item.get("text", "")
-                        break
+            try:
+                if hasattr(response, "content") and response.content:
+                    for content_item in response.content:
+                        if hasattr(content_item, "type") and content_item.type == "text":
+                            response_text = content_item.text
+                            break
+                        elif isinstance(content_item, dict) and content_item.get("type") == "text":
+                            response_text = content_item.get("text", "")
+                            break
+            except Exception as err:
+                _LOGGER.warning("Error extracting response text: %s", err)
+                response_text = "I apologize, but I encountered an error processing my response."
             
-            intent_response.async_set_speech(response_text)
+            intent_response.async_set_speech(response_text or "I'm sorry, I couldn't generate a response.")
         
         return ha_conversation.ConversationResult(
             conversation_id=chat_log.conversation_id,
