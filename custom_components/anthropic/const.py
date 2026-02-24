@@ -87,6 +87,7 @@ class AnthropicModels(StrEnum):
 
     # Claude 4.6 models (latest)
     CLAUDE_OPUS_4_6 = "claude-opus-4-6"
+    CLAUDE_SONNET_4_6 = "claude-sonnet-4-6"
 
     # Claude 4.5 models
     CLAUDE_OPUS_4_5 = "claude-opus-4-5-20251101"
@@ -108,6 +109,7 @@ class AnthropicModels(StrEnum):
 ANTHROPIC_MODELS = [
     # Latest Claude 4.6 models
     AnthropicModels.CLAUDE_OPUS_4_6,
+    AnthropicModels.CLAUDE_SONNET_4_6,
     # Claude 4.5 models
     AnthropicModels.CLAUDE_OPUS_4_5,
     AnthropicModels.CLAUDE_HAIKU_4_5,
