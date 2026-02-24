@@ -8,6 +8,7 @@ This release brings updated Claude model support (4.6/4.5 series), TTS-optimized
 
 ### Updated Model Catalog
 - Added Claude 4.6 Opus (`claude-opus-4-6`)
+- Added Claude 4.6 Sonnet (`claude-sonnet-4-6`)
 - Added Claude 4.5 Opus, Sonnet, and Haiku
 - Default model is now Claude Sonnet 4.5
 - Removed deprecated Claude 3.x models and legacy variants
