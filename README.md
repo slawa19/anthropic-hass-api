@@ -99,6 +99,82 @@ The integration automatically adapts to your Home Assistant interface language:
 - If your Home Assistant interface is set to Russian, the integration will display in Russian
 - For other languages, English will be used as the default
 
+## Default Prompt Architecture
+
+The integration uses a layered prompt system that combines a base system prompt with dynamic entity state information. The final system prompt sent to the Claude API is assembled at runtime from multiple sources.
+
+### Prompt Components
+
+The system prompt is built from three distinct parts:
+
+1. **Base Prompt** (`base_prompt`) — The core instructions that define Claude's persona, TTS rules, response modes, and Home Assistant interaction guidelines. It is a Jinja2 template that conditionally includes device-control instructions based on the `control_ha` setting.
+
+2. **Entity Info Header** (`entity_info`) — A short label that introduces the entity state data block (e.g., *"Here is information about the current state of Home Assistant entities:"*).
+
+3. **Data Instructions** (`data_instructions`) — Rules that tell Claude how to use the provided entity data when answering questions (e.g., always use the most current data, state when information is missing).
+
+### Where Prompts Are Defined
+
+| Source | Purpose |
+|--------|---------|
+| `const.py` → `DEFAULT_PROMPT` | Hardcoded Russian fallback prompt. Used when translations fail to load or as the default value in the config UI. |
+| `translations/en.json` → `system_prompts` | English locale prompts (`base_prompt`, `entity_info`, `data_instructions`). |
+| `translations/ru.json` → `system_prompts` | Russian locale prompts with locale-specific rules (transliteration, "градусов тепла/мороза" — degrees of warmth/frost — phrasing). |
+| Config entry options → `CONF_PROMPT` | User-provided custom prompt set through the integration options UI. |
+
+### Prompt Resolution Flow
+
+When a conversation starts, the agent resolves the system prompt in `_get_system_prompt(language)`:
+
+```
+1. Is a custom prompt configured (differs from DEFAULT_PROMPT)?
+   ├─ YES → Use the custom prompt as-is (skip translations entirely)
+   └─ NO  → Continue to step 2
+
+2. Load translations for the user's HA language (e.g., "en" or "ru")
+   ├─ Found "system_prompts.base_prompt" → Use it as the template
+   └─ Not found → Fall back to English translations
+       └─ English also missing → Fall back to DEFAULT_PROMPT (Russian)
+
+3. Render the base_prompt Jinja2 template with { control_ha: true/false }
+   └─ When control_ha is true, device-control instructions are included
+   └─ When control_ha is false, those sections are omitted
+
+4. Load entity_info and data_instructions from the same translations
+
+5. Build the entity state block from currently exposed HA entities
+   (grouped by domain: lights, switches, sensors, etc.)
+
+6. Assemble the final prompt:
+   ┌─────────────────────────────────┐
+   │ Rendered base_prompt            │
+   │                                 │
+   │ {entity_info header}            │
+   │ {entity states by domain}       │
+   │                                 │
+   │ {data_instructions}             │
+   └─────────────────────────────────┘
+```
+
+### The `control_ha` Variable
+
+The base prompt template uses a Jinja2 conditional `{%- if control_ha %}...{%- endif %}` to include or exclude device-control instructions. The value of `control_ha` is derived from the **LLM API** dropdown in the options UI:
+
+- **"Assist" selected** → `control_ha = true` — Claude receives tool-use instructions, TTS formatting rules, and response mode guidelines.
+- **"No control" selected** → `control_ha = false` — Claude acts as a general assistant without device-control capabilities.
+
+For backward compatibility, if no LLM API option is set (legacy installs), the old `control_ha` boolean config value is used as a fallback.
+
+### Custom Prompt Behavior
+
+Users can provide a custom prompt via **Settings → Devices & Services → Anthropic → Configure → Custom Instructions for Claude**. When a custom prompt is set:
+
+- The translation-based prompt loading is **completely bypassed**.
+- The custom prompt is used as-is without the `entity_info` and `data_instructions` sections being appended.
+- The custom prompt field supports Jinja2 templates, so users can include `{%- if control_ha %}` blocks if needed.
+
+To restore the default behavior, clear the custom prompt field or reset it to the default value shown in the UI.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
